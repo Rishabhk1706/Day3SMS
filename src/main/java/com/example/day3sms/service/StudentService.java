@@ -8,6 +8,7 @@ import com.example.day3sms.repository.StudentRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class StudentService {
@@ -26,7 +27,6 @@ public class StudentService {
         student.setName(dto.getName());
         student.setAge(dto.getAge());
         student.setEmail(dto.getEmail());
-
         StudentModel saved = repository.save(student);
 
         return new StudentResponseDto(
@@ -93,6 +93,37 @@ public class StudentService {
                 updatedStudent.getName(),
                 updatedStudent.getAge(),
                 updatedStudent.getEmail()
+        );
+    }
+
+    public StudentResponseDto patchStudent(String id, Map<String, Object> updates) {
+
+        StudentModel student = repository.findById(id)
+                .orElseThrow(() ->
+                        new StudentNotFoundException("Student not found"));
+
+        if (updates.containsKey("name")) {
+            student.setName((String) updates.get("name"));
+        }
+
+        if (updates.containsKey("age")) {
+            Object ageObj = updates.get("age");
+            if (ageObj instanceof Number) {
+                student.setAge(((Number) ageObj).intValue());
+            }
+        }
+
+        if (updates.containsKey("email")) {
+            student.setEmail((String) updates.get("email"));
+        }
+
+        StudentModel updated = repository.save(student);
+
+        return new StudentResponseDto(
+                updated.getId(),
+                updated.getName(),
+                updated.getAge(),
+                updated.getEmail()
         );
     }
 }
