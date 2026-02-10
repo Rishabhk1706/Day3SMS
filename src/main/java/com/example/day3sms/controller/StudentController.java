@@ -4,6 +4,7 @@ import com.example.day3sms.dto.StudentRequestDto;
 import com.example.day3sms.dto.StudentResponseDto;
 import com.example.day3sms.model.StudentModel;
 import com.example.day3sms.service.StudentService;
+import com.example.day3sms.util.JwtUtil;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,9 +15,21 @@ import java.util.Map;
 @RestController
 public class StudentController{
     private final StudentService service;
+    private final JwtUtil jwtUtil;
 
-    public StudentController(StudentService service) {
+    public StudentController(StudentService service, JwtUtil jwtUtil) {
+        this.jwtUtil = jwtUtil;
         this.service = service;
+    }
+
+    private void checkToken(String authHeader){
+        if(authHeader==null || !authHeader.startsWith("Bearer ")){
+            throw new RuntimeException("Invalid token");
+        }
+
+        String token = authHeader.substring(7);
+
+        jwtUtil.validateTokenAndGetEmail(token);
     }
 
 //    @PostMapping("/add-student")
@@ -25,7 +38,8 @@ public class StudentController{
 //    }
 
     @PostMapping("/add-student")
-    public StudentResponseDto addStudent(@Valid @RequestBody StudentRequestDto student){
+    public StudentResponseDto addStudent(@RequestHeader("Authorization") String authHeader, @Valid @RequestBody StudentRequestDto student){
+        checkToken(authHeader);
         return service.addStudent(student);
     }
 
@@ -35,7 +49,8 @@ public class StudentController{
 //    }
 
     @GetMapping("/students")
-    public List<StudentResponseDto> getStudents(){
+    public List<StudentResponseDto> getStudents(@RequestHeader(value = "Authorization", required = false) String authHeader){
+        checkToken(authHeader);
         return service.getAllStudents();
     }
 
@@ -49,10 +64,10 @@ public class StudentController{
         service.deleteStudent(id);
     }
 
-    @GetMapping("/students/{id}")
-    public StudentResponseDto getStudents(@PathVariable String id){
-        return service.getStudent(id);
-    }
+//    @GetMapping("/students/{id}")
+//    public StudentResponseDto getStudents(@PathVariable String id){
+//        return service.getStudent(id);
+//    }
 
 //    @PutMapping("/update/{id}")
 //    public StudentModel updateStudent(@PathVariable String id, @RequestBody StudentModel student){
